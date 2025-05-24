@@ -1,0 +1,52 @@
+
+# Stock Movement Logic - Pseudocode Format
+
+## Function: receive_stock(item_id, batch_no, qty, rate, tax, grn_id)
+Purpose:
+- To add incoming stock from GRN into item_batches
+- Record movement in stock_ledger
+
+Steps:
+1. Check if this (item_id, batch_no) already exists in item_batches.
+   a. If yes:
+      - Increase `stock_in` by qty
+      - Increase `current_stock` by qty
+   b. If no:
+      - Create a new batch record with:
+        item_id, batch_no, expiry, rate, tax, stock_in = qty, current_stock = qty
+
+2. Create a stock_ledger entry:
+   - item_id
+   - batch_id
+   - movement_type = 'IN'
+   - quantity = qty
+   - source_type = 'GRN'
+   - source_id = grn_id
+
+---
+
+## Function: issue_stock(item_id, qty, indent_id, issue_id)
+Purpose:
+- To issue items against an indent
+- Follow FIFO for batch issuing
+- Allow multi-batch issuance if needed
+
+Steps:
+1. Fetch available batches for item_id (ordered by expiry)
+2. Loop through batches until qty is fulfilled:
+   a. For each batch:
+      - Determine `issue_qty = min(batch.current_stock, qty)`
+      - Reduce `current_stock` by issue_qty
+      - Increase `stock_out` by issue_qty
+      - Subtract issue_qty from remaining qty
+
+3. For each batch used:
+   - Create stock_ledger entry:
+     item_id, batch_id, quantity, movement_type = 'OUT',
+     source_type = 'ISSUE', source_id = issue_id, indent_id = indent_id
+
+---
+
+Notes:
+- This logic ensures clean batch-wise tracking
+- Ledger enables audit trail, expiry monitoring, and analytics
